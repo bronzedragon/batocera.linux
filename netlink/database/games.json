@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "description": "Initial NetLink hardware capability registry. Exact ROM fingerprints are required for automatic recognized status; titles are only hints. NetLink emulator compatibility is tracked separately.",
+  "games": [
+    {
+      "id": "gb-tetris",
+      "systems": [
+        "gb"
+      ],
+      "aliases": [
+        "Tetris"
+      ],
+      "roms": [
+        {
+          "crc32": "46df91ad",
+          "size": 32768
+        }
+      ],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "boot_tested_only"
+    },
+    {
+      "id": "gb-pokemon-red",
+      "systems": [
+        "gb"
+      ],
+      "aliases": [
+        "Pokemon Red",
+        "Pokémon Red"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "untested"
+    },
+    {
+      "id": "gbc-pokemon-crystal",
+      "systems": [
+        "gbc"
+      ],
+      "aliases": [
+        "Pokemon Crystal",
+        "Pokémon Crystal"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": true,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "untested"
+    },
+    {
+      "id": "gba-zelda-four-swords",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "A Link to the Past & Four Swords",
+        "Four Swords"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 4
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested"
+    }
+  ]
+}
