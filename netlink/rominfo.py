@@ -8,7 +8,8 @@ from collections import defaultdict
 def header_signature(data):
     if len(data) < 0x150:
         return None
-    header = data[0x134:0x144].split(b"\0", 1)[0].decode("ascii", "replace").strip()
+    title_end = 0x143 if data[0x143] in (0x80, 0xC0) else 0x144
+    header = data[0x134:title_end].split(b"\0", 1)[0].decode("ascii", "replace").strip()
     # Standard GB header checksum covers 0x134..0x14C inclusive.
     calculated = (-sum(data[0x134:0x14D]) - 25) & 0xff
     global_sum = (sum(data) - data[0x14E] - data[0x14F]) & 0xffff
