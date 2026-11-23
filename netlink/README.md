@@ -288,15 +288,7 @@ git -C /tmp/netlink-es-check checkout --detach 3c8f8fc74656332572105659355806174
 # Read-only patch applicability verification; does not alter ES files:
 python3 netlink/tools/check_es_patch.py --es-source /tmp/netlink-es-check
 
-# Optional temporary patched source for inspection (not deployed):
-git -C /tmp/netlink-es-check apply --check \
- package/batocera/emulationstation/batocera-emulationstation/005-netlink-verified-tetris-menu.patch
-```
-
-The last optional example assumes the patch is supplied as an absolute path
-when running `git -C` from a different directory. A safe equivalent is:
-
-```sh
+# Optional direct check with an absolute patch path:
 PATCH="$PWD/package/batocera/emulationstation/batocera-emulationstation/005-netlink-verified-tetris-menu.patch"
 git -C /tmp/netlink-es-check apply --check "$PATCH"
 ```
