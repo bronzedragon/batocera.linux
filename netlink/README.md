@@ -105,3 +105,24 @@ python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /t
 ```
 
 The DAT reader identifies ROM contents by hash. NetLink eligibility and core transport compatibility remain independent.
+
+## Combined NetLink eligibility report (read-only)
+
+After scanning the local ROM library and placing the optional Libretro GB/GBC/GBA DAT files, build a report from the persistent index:
+
+```sh
+python3 /userdata/system/netlink/index.py --rom-root /userdata/roms
+python3 /userdata/system/netlink/report.py \
+  --index /userdata/system/configs/netlink/index.json \
+  --output /userdata/system/configs/netlink/eligibility.jsonl
+```
+
+Each JSONL row contains `rom_identity` (`exact`, `advisory_metadata`, or `unidentified`), `rom_identification_source` (curated hash, No-Intro SHA-1, or metadata), `hardware_status` (`documented`, `other_multiplayer`, or `unknown`), transport-specific `hardware` flags, relevant `guide_titles`, registry `game_ids`, and separate `netlink_readiness`, `host_enabled`, `join_enabled` fields. A verified No-Intro SHA-1 identity can supply a normalized title for exact matching against the ReyVGM *Game Boy* guide, even for opaque ROM filenames. Game Boy Color and GBA are never matched to that GB-only guide.
+
+**Host/Join are always disabled for now.** A playable game, No-Intro hash match, physical link support, or emulator boot test does not prove working two-device network transport. This report is intended for future EmulationStation UI consumption only. It does not change NetPlay settings, game lists, saves, or default launchers.
+
+Run regression tests on Ubuntu first:
+
+```sh
+python3 -m unittest discover -s netlink/tests -v
+```
