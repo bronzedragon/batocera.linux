@@ -27,7 +27,7 @@ done
 for tool in retroarch sha1sum sha256sum strings; do
   command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 2; }
 done
-if ! strings "$CORE" | grep -Fq 'gambatte-hb-link-6'; then
+if ! strings "$CORE" | grep -F 'gambatte-hb-link-6' >/dev/null; then
   echo 'Core does not contain protocol marker gambatte-hb-link-6' >&2
   exit 2
 fi
