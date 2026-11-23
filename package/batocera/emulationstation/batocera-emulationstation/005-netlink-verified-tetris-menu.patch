@@ -42,9 +42,10 @@ diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
 +		command += " --rom " + Utils::FileSystem::getEscapedPath(getPath());
 +		if (options.netLinkRole == "join")
 +		{
-+			if (options.netLinkPeer.empty())
++			// Only numeric IPv4 reaches the shell. Python validates each octet.
++			if (options.netLinkPeer.empty() || options.netLinkPeer.find_first_not_of("0123456789.") != std::string::npos)
 +				return "";
-+			command += " --peer " + Utils::FileSystem::getEscapedPath(options.netLinkPeer);
++			command += " --peer " + options.netLinkPeer;
 +		}
 +		return command + " --launch";
 +	}
