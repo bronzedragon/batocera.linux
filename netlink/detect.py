@@ -59,14 +59,23 @@ def classify(data, file_name, system, database):
                     **hdr, "crc32": crc, "sha1": sha1}
     normalized = (Path(file_name).stem + " " + hdr.get("header_title", "")).casefold()
     suggestions = [
-        {"game_id": record["id"], "capabilities": record["capabilities"]}
+        {"game_id": record["id"], "capabilities": record["capabilities"],
+         "evidence": (
+             "game_code" if system == "gba" and hdr.get("game_code") in record.get("game_codes", [])
+             else "title_hint"
+         )}
         for record in database["games"]
-        if system in record["systems"] and any(
-            re.search(r"(?<![a-z0-9])" + re.escape(alias.casefold()) + r"(?![a-z0-9])", normalized)
-            for alias in record.get("aliases", []))
+        if system in record["systems"] and (
+            (system == "gba" and bool(hdr.get("game_code"))
+             and hdr["game_code"] in record.get("game_codes", []))
+            or any(
+                re.search(r"(?<![a-z0-9])" + re.escape(alias.casefold()) + r"(?![a-z0-9])", normalized)
+                for alias in record.get("aliases", []))
+        )
     ]
     return {"status": "candidate" if suggestions else "unknown",
-            "confidence": "title_hint" if suggestions else "none",
+            "confidence": ("game_code" if any(s["evidence"] == "game_code" for s in suggestions)
+                           else "title_hint") if suggestions else "none",
             "suggestions": suggestions, **hdr, "crc32": crc, "sha1": sha1}
 
 
