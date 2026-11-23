@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Community-source hardware-capability candidates; exact ROM fingerprints are required for recognized status. Core network compatibility must be verified separately. Sources are pointers, not a guarantee that every regional ROM or multiplayer mode works.",
+  "description": "Hardware-capability candidates and exact ROM fingerprints. Network compatibility is verified only for recorded ROM revision/core/protocol combinations; this does not automatically enable EmulationStation actions.",
   "games": [
     {
       "id": "gb-tetris",
@@ -13,7 +13,9 @@
       "roms": [
         {
           "crc32": "46df91ad",
-          "size": 32768
+          "size": 32768,
+          "sha1": "74591cc9501af93873f9a5d3eb12da12c0723bbc",
+          "variant": "World (Rev A)"
         }
       ],
       "capabilities": {
@@ -24,9 +26,29 @@
         "max_players": 2
       },
       "netlink_core": "gambatte_link",
-      "compatibility": "boot_tested_only",
+      "compatibility": "network_verified",
       "hardware_sources": [
         "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ],
+      "network_tests": [
+        {
+          "transport": "cable",
+          "protocol": "gambatte-hb-link-6",
+          "core": "gambatte_link",
+          "core_sha256": "0c8db0ead8ae814d2e65fd7bc867e767344dad37fc0c42380063b4a7b44b26b2",
+          "rom_sha1": "74591cc9501af93873f9a5d3eb12da12c0723bbc",
+          "frontend": "RetroArch 1.22.2",
+          "host": "ginryuus-Emulation-Box",
+          "client": "seidouryuus-Emulation-Laptop",
+          "result": "passed",
+          "observed": [
+            "LAN host and client connected",
+            "Both players entered two-player Tetris",
+            "Bidirectional gameplay and penalty block transfer confirmed",
+            "Completed a round without link failure"
+          ],
+          "evidence": "User-reported live test on both Batocera machines, 2026-11-23"
+        }
       ]
     },
     {
