@@ -61,3 +61,26 @@ python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /t
 ```
 
 ROM bytes, saves, gamelists and existing NetPlay settings are never modified.
+
+## Optional official No-Intro XML DAT identification
+
+Download XML DATs for **Nintendo - Game Boy**, **Nintendo - Game Boy Color**, and **Nintendo - Game Boy Advance** from https://datomatic.no-intro.org/index.php?page=download and place them at:
+
+```text
+netlink/database/no-intro/gb.dat
+netlink/database/no-intro/gbc.dat
+netlink/database/no-intro/gba.dat
+```
+
+You can specify another location with `--dat-dir /path/to/dats`. The source DATs are not bundled or automatically downloaded; this keeps ROM library scans offline and allows independently chosen No-Intro releases.
+
+The `<datafile><game><rom>` (or `<machine>`) XML is parsed into hash indices. SHA-1 + size is treated as an exact catalog **ROM identity**; CRC32 + size is advisory only when the DAT entry has no SHA-1. It never accepts a conflicting SHA-1 by falling back to CRC32. Exact DAT identification appears in `no_intro_matches` in JSONL and the cache. It **does not** upgrade NetLink's `status` to `recognized`, or imply a game's link-cable support or network readiness. Keep network eligibility tied to the curated hardware capability and core test records.
+
+Index schema version 4 fingerprints all present DAT contents and rebuilds classifications automatically when a DAT is added, removed, or updated. Each DAT is subject to a 100-MiB input limit.
+
+```sh
+python3 -m unittest discover -s netlink/tests -v
+python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /tmp/netlink-index-results.jsonl
+```
+
+Older installations still work with no DAT files. The importer is read-only and never renames or copies ROMs.
