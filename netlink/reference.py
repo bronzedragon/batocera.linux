@@ -31,7 +31,14 @@ def normalize(value):
 def name_candidates(file_name, header_title=""):
     stem = Path(file_name).stem
     clean_stem = RELEASE_SUFFIX.sub("", stem).strip()
-    return {normalize(v) for v in (clean_stem, header_title) if normalize(v)}
+    file_key = normalize(clean_stem)
+    names = {file_key} if file_key else set()
+    header_key = normalize(header_title)
+    # Prevent a shortened cartridge header (e.g. TETRIS) from matching
+    # a different, more specific filename (e.g. Tetris 2).
+    if header_key and file_key.replace(" ", "") == header_key.replace(" ", ""):
+        names.add(header_key)
+    return names
 
 def catalog_matches(file_name, header_title, system, catalog):
     if system != "gb":  # This specific guide expressly excludes GBC games.
