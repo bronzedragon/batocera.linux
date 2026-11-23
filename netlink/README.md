@@ -42,3 +42,22 @@ python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /t
 ```
 
 The current implementation does **not** alter EmulationStation menus, select a core automatically, or enable NetLink Host/Join sessions.
+
+## Optional Thomas Daley GB/GBC cartridge catalog (2017)
+
+`tools/import_gb_rom_info.py` converts the user-supplied `GB_ROM_INFO.txt` into an advisory JSON catalog. The original document has 9,333 GB/GBC ROM records, but **no SHA-1 or CRC32**. Matching size, header title, CGB flag, ROM version, header checksum and global checksum narrows candidate revisions without establishing an exact byte-for-byte match. Neither catalog matches nor checksum success imply network connectivity.
+
+Generate the reference on a computer with the source text:
+
+```sh
+python3 netlink/tools/import_gb_rom_info.py GB_ROM_INFO.txt \
+    netlink/database/references/gb_rom_info_reference.json
+```
+
+Deploy the resulting JSON alongside the other NetLink files. The catalog is optional, and is **not committed** to this branch at present; without it, the detector retains its previous behavior. Once deployed, it produces advisory `rom_info_matches` in the per-ROM output, including for entries still classified as `unknown`. Index schema version 3 invalidates old classifications when this catalog appears, disappears, or changes.
+
+```sh
+python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /tmp/netlink-index-results.jsonl
+```
+
+ROM bytes, saves, gamelists and existing NetPlay settings are never modified.
