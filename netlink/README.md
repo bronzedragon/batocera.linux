@@ -126,3 +126,30 @@ Run regression tests on Ubuntu first:
 ```sh
 python3 -m unittest discover -s netlink/tests -v
 ```
+
+## Two-machine Gambatte NetLink LAN test (experimental)
+
+This test uses the custom Gambatte `gambatte-hb-link-6` **RetroArch netpacket** interface, not a separate socket/server. A core already proven to load a local ROM is not yet proof of two-peer link gameplay. Do not enable EmulationStation Host/Join actions until both machines actually complete a game link session.
+
+Use the same patched core build on both Batocera hosts and the **same Tetris ROM SHA-1**. Exit running RetroArch instances before testing. The new helper is **dry-run by default**; it prints core SHA-256 and ROM SHA-1 and checks the embedded protocol string. It does not write system settings.
+
+```sh
+# Both machines: verify core and ROM without starting RetroArch
+bash /userdata/system/netlink/tools/test_gambatte_lan.sh \
+  --role host --rom '/userdata/roms/gb/Tetris (World) (Rev A).gb'
+
+# On ginryuus-Emulation-Box (known LAN IP 10.8.76.244), then repeat with --launch
+bash /userdata/system/netlink/tools/test_gambatte_lan.sh \
+  --role host --rom '/userdata/roms/gb/Tetris (World) (Rev A).gb' --launch
+
+# On seidouryuus-Emulation-Laptop, join the box's IP
+bash /userdata/system/netlink/tools/test_gambatte_lan.sh \
+  --role join --peer 10.8.76.244 \
+  --rom '/userdata/roms/gb/Tetris (World) (Rev A).gb' --launch
+```
+
+For either machine, adjust `--rom` if its actual path differs. The custom libretro core defaults to `/usr/lib/libretro/gambatte_link_libretro.so`; if your installation differs use `--core /path/to/core.so`. The RetroArch netplay port defaults to 55435; for a different port use the same `--port` on both. To use an existing config explicitly add `--config /path/to/retroarch.cfg`. Run sessions from the machine's graphical environment: SSH alone may lack its display/audio environment.
+
+Before trying gameplay compare the printed SHA-256 of the two cores and SHA-1 of both Tetris ROMs. Protocol markers matching without identical core builds is **not** sufficient to guarantee consistent behavior. When a session runs, record whether the guest connects, whether both sides reach Tetris 2P/versus, whether moves and garbage transfer, and whether the link survives a full round. Do not mark compatibility `network_verified` until the serial gameplay test is completed. No game save files or global Batocera settings are modified by the test helper; RetroArch itself may write its normal runtime saves/configuration depending on existing settings.
+
+The host and join commands match RetroArch's `--host`, `--connect`, `--port`, `--libretro` CLI options. These are *experiment* sessions, not EmulationStation actions.
