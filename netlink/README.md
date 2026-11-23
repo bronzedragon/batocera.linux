@@ -180,3 +180,53 @@ Next implementation phase: an explicit per-title EmulationStation Host/Join
 integration guarded by exact hash, matching core build, and supported transport.
 Do not modify systemwide RetroArch netplay defaults or automatically enroll
 other ROMs in link play.
+
+## Exact-fingerprint NetLink session launcher (pre-EmulationStation integration)
+
+`launch.py` is the validated **launch boundary** for a future per-game
+EmulationStation **Host NetLink / Join NetLink** menu, not yet an actual ES menu
+extension. It checks the *inner* GB/GBC ROM SHA-1 even if the file is ZIP
+compressed, the installed custom core SHA-256, protocol, and a passing
+`network_tests` record for the exact combination before preparing RetroArch
+`--host` or `--connect`. A title similarity or hardware capability flag
+is insufficient. It refuses unverified ROM/core combinations. Default behavior
+is read-only preflight; `--launch` is explicitly required to start RetroArch.
+
+This is currently gated to the Tetris (World) (Rev A) tested combination:
+
+```sh
+# On ginryuus-Emulation-Box, preflight first
+python3 /userdata/system/netlink/launch.py --role host \
+  --rom '/userdata/roms/gb/Tetris (World) (Rev A).zip'
+
+# Host live (only after preflight)
+python3 /userdata/system/netlink/launch.py --role host \
+  --rom '/userdata/roms/gb/Tetris (World) (Rev A).zip' --launch
+
+# Join live, from seidouryuus-Emulation-Laptop
+python3 /userdata/system/netlink/launch.py --role join \
+  --peer 10.8.76.244 \
+  --rom '/userdata/roms/gb/Tetris (World) (Rev A).zip' --launch
+```
+
+Default core is `/userdata/system/custom-cores/gambatte_link_libretro.so`,
+the validated installation path. `--core` permits an alternative path but
+**never** bypasses the pinned binary fingerprint. `--peer` must be a literal
+unicast IP; `--port` defaults to 55435. Use `--config` only if a specific
+RetroArch configuration is required. ROMs must remain under `/userdata/roms`.
+
+To exercise the synthetic tests: `python3 -m unittest discover -s
+netlink/tests -v`. These new tests have not yet been run on actual Batocera
+hosts. The launcher intentionally does not alter game metadata or save files;
+RetroArch itself may create or update its usual runtime configuration when
+started.
+
+The *next* change belongs in Batocera's pinned EmulationStation source
+(`batocera-emulationstation`, package version
+`3c8f8fc7465633257210565935580617418362b7`):
+`es-app/src/guis/GuiGameOptions.cpp` owns the game's action menu and currently
+offers generic `START A NETPLAY GAME`. Native NetLink entries must use the
+fingerprint-gated launcher and a proper ES game launch lifecycle/return path,
+rather than hijacking generic Netplay or changing global core selection.
+Until that integration is implemented and tested, report
+`host_enabled=false`, `join_enabled=false`.
