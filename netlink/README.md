@@ -153,3 +153,30 @@ For either machine, adjust `--rom` if its actual path differs. The custom libret
 Before trying gameplay compare the printed SHA-256 of the two cores and SHA-1 of both Tetris ROMs. Protocol markers matching without identical core builds is **not** sufficient to guarantee consistent behavior. When a session runs, record whether the guest connects, whether both sides reach Tetris 2P/versus, whether moves and garbage transfer, and whether the link survives a full round. Do not mark compatibility `network_verified` until the serial gameplay test is completed. No game save files or global Batocera settings are modified by the test helper; RetroArch itself may write its normal runtime saves/configuration depending on existing settings.
 
 The host and join commands match RetroArch's `--host`, `--connect`, `--port`, `--libretro` CLI options. These are *experiment* sessions, not EmulationStation actions.
+
+
+## Verified first two-host link session (2026-11-23)
+
+**Tetris (World) (Rev A), GB: network verified by live two-machine test.** Both
+machines used the same inner ROM SHA-1
+`74591cc9501af93873f9a5d3eb12da12c0723bbc` and the same patched
+Gambatte core SHA-256
+`0c8db0ead8ae814d2e65fd7bc867e767344dad37fc0c42380063b4a7b44b26b2`.
+The protocol was `gambatte-hb-link-6`, using RetroArch 1.22.2 on
+`ginryuus-Emulation-Box` (host) and `seidouryuus-Emulation-Laptop` (client).
+Live session logs confirmed host and guest netpacket initialization and
+connection. The user confirmed both sides entered two-player gameplay, exchanged
+penalty blocks bidirectionally and completed a round.
+
+The curated database now records `compatibility: network_verified` for this
+**specific** Tetris revision/core/protocol test. The read-only eligibility
+report emits `netlink_readiness: manual_verified` only if the same exact
+ROM SHA-1 appears in a No-Intro exact match and a passing test record; other
+ROM revisions remain unverified. `host_enabled` and `join_enabled` stay
+`false` until safe EmulationStation menu actions and session management are
+implemented and tested. Re-run indexing and reporting after deployment.
+
+Next implementation phase: an explicit per-title EmulationStation Host/Join
+integration guarded by exact hash, matching core build, and supported transport.
+Do not modify systemwide RetroArch netplay defaults or automatically enroll
+other ROMs in link play.
