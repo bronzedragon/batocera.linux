@@ -2,8 +2,8 @@
 """Read-only, EmulationStation-ready NetLink eligibility report.
 
 The output describes candidate hardware capabilities and independent ROM
-identification evidence. It intentionally NEVER enables Host or Join: no
-verified two-machine transport records exist yet.
+identification evidence. Verified manual transport testing is reported
+separately; Host and Join stay disabled until the ES UI is implemented.
 """
 import argparse
 from collections import Counter
@@ -81,12 +81,17 @@ def describe_row(row, database, guide):
     hardware = "documented" if any(flags[k] for k in NETWORK_KEYS) else (
         "other_multiplayer" if any(flags.values()) else "unknown"
     )
-    # Source-backed hardware capability must not imply a working network core.
-    compatible = [r for r in candidates
-                  if r.get("compatibility") == "network_verified"]
-    # Even a stored compatibility label is not yet sufficient: a separate
-    # same-revision, tested transport record will be required in future.
-    readiness = "not_implemented"
+    # Only a tested transport record for this exact ROM SHA-1 and core
+    # counts as verified; title matches and candidate status do not.
+    exact_sha1s = {str(m.get("sha1", "")).lower() for m in exact_dat}
+    manual_tests = [
+        test for record in candidates
+        for test in record.get("network_tests", [])
+        if test.get("result") == "passed"
+        and test.get("rom_sha1", "").lower() in exact_sha1s
+        and record.get("compatibility") == "network_verified"
+    ]
+    readiness = "manual_verified" if manual_tests else "not_implemented"
     return {
         "system": row.get("system"),
         "path": row.get("path"),
@@ -104,9 +109,13 @@ def describe_row(row, database, guide):
         "compatibility_records": sorted({str(r.get("compatibility", "untested"))
                                           for r in candidates}),
         "netlink_readiness": readiness,
+        "verified_transports": sorted({t["transport"] for t in manual_tests
+                                       if t.get("transport")}),
         "host_enabled": False,
         "join_enabled": False,
-        "reason": "Network link transport not verified for this ROM/core",
+        "reason": ("Manual network test verified; EmulationStation actions not yet implemented"
+                   if manual_tests else
+                   "Network link transport not verified for this exact ROM/core"),
     }
 
 
