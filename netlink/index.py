@@ -10,8 +10,9 @@ import tempfile
 import zipfile
 
 import detect
+import rominfo
 
-INDEX_VERSION = 2
+INDEX_VERSION = 3
 DEFAULT_INDEX = Path("/userdata/system/configs/netlink/index.json")
 
 def read_previous(path):
@@ -28,11 +29,11 @@ def rom_files(root):
                 if path.is_file() and path.suffix.lower() in detect.EXTENSIONS[system]:
                     yield system, path
 
-def scan_one(system, path, database, guide=None):
+def scan_one(system, path, database, guide=None, rom_info_lookup=None):
     rows = []
     try:
         for name, payload in detect.rom_entries(path, system):
-            result = detect.classify(payload, name, system, database, guide)
+            result = detect.classify(payload, name, system, database, guide, rom_info_lookup)
             rows.append({"system": system, "path": str(path),
                          "rom_entry": name, "size": len(payload), **result})
         if not rows:
@@ -43,7 +44,7 @@ def scan_one(system, path, database, guide=None):
                      "error": str(error)})
     return rows
 
-def build_index(root, database_path, previous=None, guide_path=None):
+def build_index(root, database_path, previous=None, guide_path=None, rom_info_path=None):
     database_bytes = database_path.read_bytes()
     database = json.loads(database_bytes)
     if database.get("schema_version") != 1:
@@ -54,7 +55,11 @@ def build_index(root, database_path, previous=None, guide_path=None):
     guide = json.loads(guide_bytes)
     if guide.get('schema_version') != 1:
         raise ValueError('Unsupported GB reference schema')
-    fingerprint = hashlib.sha256(database_bytes + b'\\0' + guide_bytes).hexdigest()
+    if rom_info_path is None:
+        rom_info_path = Path(__file__).resolve().parent / 'database' / 'references' / 'gb_rom_info_reference.json'
+    info_bytes = rom_info_path.read_bytes() if rom_info_path.is_file() else b''
+    rom_info_lookup = rominfo.make_lookup(json.loads(info_bytes)) if info_bytes else None
+    fingerprint = hashlib.sha256(database_bytes + b'\\0' + guide_bytes + b'\\0' + info_bytes).hexdigest()
     root = root.resolve()
     previous = previous or {}
     valid = (previous.get("schema_version") == INDEX_VERSION
@@ -75,7 +80,7 @@ def build_index(root, database_path, previous=None, guide_path=None):
                     and isinstance(prior.get("rows"), list)
                     and bool(prior["rows"])
                     and all(row.get("status") != "error" for row in prior["rows"]))
-        rows = prior["rows"] if reusable else scan_one(system, path, database, guide)
+        rows = prior["rows"] if reusable else scan_one(system, path, database, guide, rom_info_lookup)
         files[str(path)] = {"identity": identity, "rows": rows}
         stats["cached_files" if reusable else "scanned_files"] += 1
         if any(row.get("status") == "error" for row in rows):
@@ -110,12 +115,13 @@ def main():
                         default=Path(__file__).resolve().parent / "database" / "games.json")
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX)
     parser.add_argument('--guide', type=Path, default=Path(__file__).resolve().parent / 'database' / 'references' / 'gb_reyvgm.json')
+    parser.add_argument('--rom-info', type=Path, default=Path(__file__).resolve().parent / 'database' / 'references' / 'gb_rom_info_reference.json')
     parser.add_argument("--jsonl", action="store_true", help="Output per-ROM classification records")
     args = parser.parse_args()
     if not args.rom_root.is_dir():
         parser.error("ROM root not found: " + str(args.rom_root))
     try:
-        index, stats = build_index(args.rom_root, args.database, read_previous(args.index), args.guide)
+        index, stats = build_index(args.rom_root, args.database, read_previous(args.index), args.guide, args.rom_info)
         save_atomic(args.index, index)
     except (OSError, ValueError, TypeError) as error:
         parser.exit(1, "NetLink indexing error: " + str(error) + "\n")
