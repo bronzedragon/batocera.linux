@@ -89,7 +89,7 @@ def classify(data, file_name, system, database, guide=None, rom_info_lookup=None
             "reference_matches": matches,
             "confidence": ("game_code" if any(s["evidence"] == "game_code" for s in suggestions)
                            else "title_hint") if suggestions else ("guide_exact_title" if any(m["hardware_link_capable"] for m in matches) else "none"),
-            "suggestions": suggestions, **hdr, "crc32": crc, "sha1": sha1}
+            "suggestions": suggestions, **hdr, **extra, "crc32": crc, "sha1": sha1}
 
 
 def scan(rom_root, database, guide=None, rom_info_lookup=None, nointro_indices=None):
