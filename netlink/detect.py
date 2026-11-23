@@ -15,6 +15,7 @@ import zlib
 
 import reference
 import rominfo
+import nointro
 
 EXTENSIONS = {"gb": {".gb", ".zip"}, "gbc": {".gbc", ".zip", ".gb"}, "gba": {".gba", ".zip"}}
 INNER_EXTENSIONS = {".gb", ".gbc", ".gba"}
@@ -44,12 +45,17 @@ def header_info(data, system):
     return {}
 
 
-def classify(data, file_name, system, database, guide=None, rom_info_lookup=None):
+def classify(data, file_name, system, database, guide=None, rom_info_lookup=None, nointro_indices=None):
     crc = format(zlib.crc32(data) & 0xffffffff, "08x")
     sha1 = hashlib.sha1(data).hexdigest()
     hdr = header_info(data, system)
     advisory = rominfo.candidates(data, system, rom_info_lookup)
-    extra = {"rom_info_matches": advisory} if advisory else {}
+    dat_matches = nointro.identify(system, sha1, crc, len(data), nointro_indices)
+    extra = {}
+    if advisory:
+        extra["rom_info_matches"] = advisory
+    if dat_matches:
+        extra["no_intro_matches"] = dat_matches
     # Exact fingerprints only. Wildcard matches never produce an automatic eligible verdict.
     for record in database["games"]:
         if system not in record["systems"]:
@@ -86,7 +92,7 @@ def classify(data, file_name, system, database, guide=None, rom_info_lookup=None
             "suggestions": suggestions, **hdr, "crc32": crc, "sha1": sha1}
 
 
-def scan(rom_root, database, guide=None, rom_info_lookup=None):
+def scan(rom_root, database, guide=None, rom_info_lookup=None, nointro_indices=None):
     for system in ("gb", "gbc", "gba"):
         folder = rom_root / system
         if not folder.is_dir():
@@ -98,7 +104,7 @@ def scan(rom_root, database, guide=None, rom_info_lookup=None):
                 found = False
                 for inner_name, data in rom_entries(path, system):
                     found = True
-                    result = classify(data, inner_name, system, database, guide, rom_info_lookup)
+                    result = classify(data, inner_name, system, database, guide, rom_info_lookup, nointro_indices)
                     yield {"system": system, "path": str(path), "rom_entry": inner_name,
                            "size": len(data), **result}
                 if not found:
@@ -116,15 +122,17 @@ def main():
     parser.add_argument("--recognized-only", action="store_true")
     parser.add_argument("--guide", type=Path, default=Path(__file__).resolve().parent / "database" / "references" / "gb_reyvgm.json")
     parser.add_argument("--rom-info", type=Path, default=Path(__file__).resolve().parent / "database" / "references" / "gb_rom_info_reference.json")
+    parser.add_argument("--dat-dir", type=Path, default=Path(__file__).resolve().parent / "database" / "no-intro", help="Optional local No-Intro XML files gb.dat, gbc.dat, gba.dat")
     args = parser.parse_args()
     with args.database.open(encoding="utf-8") as f:
         db = json.load(f)
     guide = json.loads(args.guide.read_text(encoding="utf-8"))
     rom_info_lookup = rominfo.make_lookup(json.loads(args.rom_info.read_text(encoding="utf-8"))) if args.rom_info.is_file() else None
+    nointro_indices = nointro.build_lookup(args.dat_dir)
     if db.get("schema_version") != 1:
         parser.error("Unsupported database schema")
     counts = {"recognized": 0, "candidate": 0, "unknown": 0, "error": 0}
-    for row in scan(args.rom_root, db, guide, rom_info_lookup):
+    for row in scan(args.rom_root, db, guide, rom_info_lookup, nointro_indices):
         counts[row["status"]] += 1
         if not args.recognized_only or row["status"] == "recognized":
             print(json.dumps(row, ensure_ascii=False, sort_keys=True))
