@@ -24,10 +24,17 @@ done
 [[ "$PORT" =~ ^[0-9]+$ ]] && ((10#$PORT >= 1 && 10#$PORT <= 65535)) || { echo "Invalid port" >&2; exit 2; }
 [[ "$ROLE" != join || -n "$PEER" ]] || { echo "Join needs --peer" >&2; exit 2; }
 [[ -z "$CONFIG" || -f "$CONFIG" ]] || { echo "Config not found: $CONFIG" >&2; exit 2; }
-for tool in retroarch sha1sum sha256sum strings; do
+for tool in retroarch sha1sum sha256sum python3; do
   command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 2; }
 done
-if ! strings "$CORE" | grep -F 'gambatte-hb-link-6' >/dev/null; then
+if ! python3 - "$CORE" <<'PY'
+import pathlib
+import sys
+with pathlib.Path(sys.argv[1]).open("rb") as stream:
+    found = b"gambatte-hb-link-6" in stream.read()
+sys.exit(0 if found else 1)
+PY
+then
   echo 'Core does not contain protocol marker gambatte-hb-link-6' >&2
   exit 2
 fi
