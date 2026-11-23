@@ -13,6 +13,8 @@ import sys
 import zipfile
 import zlib
 
+import reference
+
 EXTENSIONS = {"gb": {".gb", ".zip"}, "gbc": {".gbc", ".zip", ".gb"}, "gba": {".gba", ".zip"}}
 INNER_EXTENSIONS = {".gb", ".gbc", ".gba"}
 CHUNK_SIZE = 1024 * 1024
@@ -41,7 +43,7 @@ def header_info(data, system):
     return {}
 
 
-def classify(data, file_name, system, database):
+def classify(data, file_name, system, database, guide=None):
     crc = format(zlib.crc32(data) & 0xffffffff, "08x")
     sha1 = hashlib.sha1(data).hexdigest()
     hdr = header_info(data, system)
@@ -57,7 +59,7 @@ def classify(data, file_name, system, database):
                     "game_id": record["id"], "capabilities": record["capabilities"],
                     "netlink_core": record.get("netlink_core"), "compatibility": record.get("compatibility", "untested"),
                     **hdr, "crc32": crc, "sha1": sha1}
-    normalized = (Path(file_name).stem + " " + hdr.get("header_title", "")).casefold()
+    names = reference.name_candidates(file_name, hdr.get("header_title", ""))
     suggestions = [
         {"game_id": record["id"], "capabilities": record["capabilities"],
          "evidence": (
@@ -69,17 +71,19 @@ def classify(data, file_name, system, database):
             (system == "gba" and bool(hdr.get("game_code"))
              and hdr["game_code"] in record.get("game_codes", []))
             or any(
-                re.search(r"(?<![a-z0-9])" + re.escape(alias.casefold()) + r"(?![a-z0-9])", normalized)
+                reference.normalize(alias) in names
                 for alias in record.get("aliases", []))
         )
     ]
-    return {"status": "candidate" if suggestions else "unknown",
+    matches = reference.catalog_matches(file_name, hdr.get("header_title", ""), system, guide or {})
+    return {"status": "candidate" if suggestions or any(m["hardware_link_capable"] for m in matches) else "unknown",
+            "reference_matches": matches,
             "confidence": ("game_code" if any(s["evidence"] == "game_code" for s in suggestions)
-                           else "title_hint") if suggestions else "none",
+                           else "title_hint") if suggestions else ("guide_exact_title" if any(m["hardware_link_capable"] for m in matches) else "none"),
             "suggestions": suggestions, **hdr, "crc32": crc, "sha1": sha1}
 
 
-def scan(rom_root, database):
+def scan(rom_root, database, guide=None):
     for system in ("gb", "gbc", "gba"):
         folder = rom_root / system
         if not folder.is_dir():
@@ -91,7 +95,7 @@ def scan(rom_root, database):
                 found = False
                 for inner_name, data in rom_entries(path, system):
                     found = True
-                    result = classify(data, inner_name, system, database)
+                    result = classify(data, inner_name, system, database, guide)
                     yield {"system": system, "path": str(path), "rom_entry": inner_name,
                            "size": len(data), **result}
                 if not found:
@@ -107,13 +111,15 @@ def main():
     parser.add_argument("--database", type=Path,
                         default=Path(__file__).resolve().parent / "database" / "games.json")
     parser.add_argument("--recognized-only", action="store_true")
+    parser.add_argument("--guide", type=Path, default=Path(__file__).resolve().parent / "database" / "references" / "gb_reyvgm.json")
     args = parser.parse_args()
     with args.database.open(encoding="utf-8") as f:
         db = json.load(f)
+    guide = json.loads(args.guide.read_text(encoding="utf-8"))
     if db.get("schema_version") != 1:
         parser.error("Unsupported database schema")
     counts = {"recognized": 0, "candidate": 0, "unknown": 0, "error": 0}
-    for row in scan(args.rom_root, db):
+    for row in scan(args.rom_root, db, guide):
         counts[row["status"]] += 1
         if not args.recognized_only or row["status"] == "recognized":
             print(json.dumps(row, ensure_ascii=False, sort_keys=True))
