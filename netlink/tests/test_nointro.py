@@ -68,6 +68,40 @@ class NoIntroTests(unittest.TestCase):
             self.assertEqual(result["status"], "unknown")
             self.assertEqual(result["no_intro_matches"][0]["identification"], "exact_sha1")
 
+    def test_libretro_clrmamepro(self):
+        sample = (
+            'clrmamepro (\n\tname "Nintendo - Game Boy Advance"\n)\n'
+            'game (\n'
+            '\tname "Pokemon (USA) (Rev 1)"\n'
+            '\tregion "USA"\n'
+            '\trom ( name "Pokemon (USA) (Rev 1).gba" size 32768 '
+            'crc 1234ABCD md5 ' + "a" * 32 + ' sha1 ' + SHA.upper() + ' serial "BPRE" )\n'
+            ')\n'
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            Path(temp, "gba.dat").write_text(sample, encoding="utf-8")
+            indices = nointro.build_lookup(temp)
+            found = nointro.identify("gba", SHA, CRC, SIZE, indices)
+            self.assertEqual(len(found), 1)
+            self.assertEqual(found[0]["game"], "Pokemon (USA) (Rev 1)")
+            self.assertEqual(found[0]["identification"], "exact_sha1")
+
+    def test_libretro_multiple_games_and_parentheses_in_titles(self):
+        sample = (
+            'clrmamepro ( name "Nintendo - Game Boy Advance" )\n'
+            'game ( name "First (World)" rom ( name "First (World).gba" '
+            'size 32768 crc 1234ABCD sha1 ' + SHA + ' ) )\n'
+            'game ( name "Second" rom ( name "Second.gba" '
+            'size 65536 crc ABCDEF12 sha1 ' + "b"*40 + ' ) )\n'
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            Path(temp, "gba.dat").write_text(sample, encoding="utf-8")
+            idx = nointro.build_lookup(temp)
+            self.assertEqual(nointro.identify("gba", SHA, CRC, SIZE, idx)[0]["game"],
+                             "First (World)")
+            self.assertEqual(nointro.identify("gba", "b"*40, "abcdef12", 65536, idx)[0]["game"],
+                             "Second")
+
     def test_machine_element(self):
         with tempfile.TemporaryDirectory() as temp:
             p = Path(temp, "gb.dat")
