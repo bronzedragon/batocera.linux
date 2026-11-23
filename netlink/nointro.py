@@ -39,46 +39,95 @@ def dat_fingerprint(folder):
                 dig.update(chunk)
     return dig.digest()
 
-def build_lookup(folder):
-    """Return per-system indices keyed by SHA-1 and (CRC32, ROM size).
+def _rom_records_xml(path):
+    """Yield (game name, ROM attributes) from Logiqx XML."""
+    active_name = None
+    for event, elem in ET.iterparse(path, events=("start", "end")):
+        tag = local_name(elem.tag)
+        if event == "start" and tag in ("game", "machine"):
+            active_name = elem.attrib.get("name", "")
+        elif event == "end" and tag == "rom" and active_name is not None:
+            yield active_name, dict(elem.attrib)
+            elem.clear()
+        elif event == "end" and tag in ("game", "machine"):
+            active_name = None
+            elem.clear()
 
-    XML iterparse avoids storing complete parsed trees. Named 'machine' records
-    are accepted along with ordinary 'game' records.
-    """
+
+# Quoted strings are a single token, regardless of parentheses in game titles.
+_CM_TOKEN = re.compile(r'"(?:\\\\.|[^"\\\\])*"|[()]|[^\\s()"]+')
+
+def _rom_records_cmpro(path):
+    """Yield (game name, ROM attributes) from Libretro's ClrMamePro DAT."""
+    source = path.read_text(encoding="utf-8-sig")
+    def unquote(token):
+        if token.startswith('"') and token.endswith('"'):
+            return token[1:-1].replace('\\\\"', '"').replace('\\\\\\\\', '\\\\')
+        return token
+
+    tokens = iter(_CM_TOKEN.findall(source))
+    def group():
+        fields, children = {}, []
+        for key in tokens:
+            if key == ")":
+                return fields, children
+            try:
+                value = next(tokens)
+            except StopIteration:
+                raise ValueError("Truncated ClrMamePro DAT: " + str(path)) from None
+            if value == "(":
+                child_fields, child_children = group()
+                children.append((key.lower(), child_fields, child_children))
+            elif value == ")":
+                raise ValueError("Malformed ClrMamePro DAT: " + str(path))
+            else:
+                fields[key.lower()] = unquote(value)
+        raise ValueError("Truncated ClrMamePro DAT: " + str(path))
+
+    for token in tokens:
+        if token.lower() not in ("game", "machine", "clrmamepro"):
+            continue
+        if next(tokens, None) != "(":
+            raise ValueError("Invalid ClrMamePro DAT group: " + str(path))
+        fields, children = group()
+        if token.lower() == "clrmamepro":
+            continue
+        for kind, child, _ in children:
+            if kind == "rom":
+                yield fields.get("name", ""), child
+
+
+def build_lookup(folder):
+    """Index both Logiqx XML and ClrMamePro text .dat catalogs."""
     indices = {}
     for system, path in dat_paths(folder).items():
         if path.stat().st_size > MAX_DAT_BYTES:
             raise ValueError("No-Intro DAT too large: " + str(path))
+        with path.open("rb") as stream:
+            prefix = stream.read(128).lstrip(b"\\xef\\xbb\\xbf \\r\\n\\t")
+        records = (_rom_records_xml(path) if prefix.startswith(b"<")
+                   else _rom_records_cmpro(path))
         by_sha1, by_crc = {}, {}
-        active_name = None
-        for event, elem in ET.iterparse(path, events=("start", "end")):
-            tag = local_name(elem.tag)
-            if event == "start":
-                if tag in ("game", "machine"):
-                    active_name = elem.attrib.get("name", "")
-            elif tag == "rom" and active_name is not None:
-                raw_size = elem.attrib.get("size", "")
-                sha = elem.attrib.get("sha1", "").lower()
-                crc = elem.attrib.get("crc", "").lower()
-                if raw_size.isdigit():
-                    size = int(raw_size)
-                    record = {
-                        "game": active_name,
-                        "rom": elem.attrib.get("name", ""),
-                        "size": size,
-                        "source_dat": path.name,
-                        "system": system,
-                    }
-                    if SHA1_RE.fullmatch(sha):
-                        record["sha1"] = sha
-                        by_sha1.setdefault((sha, size), []).append(record)
-                    if CRC_RE.fullmatch(crc):
-                        record["crc32"] = crc
-                        by_crc.setdefault((crc, size), []).append(record)
-                elem.clear()
-            elif event == "end" and tag in ("game", "machine"):
-                elem.clear()
-                active_name = None
+        for game_name, attrs in records:
+            raw_size = attrs.get("size", "")
+            sha = attrs.get("sha1", "").lower()
+            crc = attrs.get("crc", "").lower()
+            if not raw_size.isdigit():
+                continue
+            size = int(raw_size)
+            record = {
+                "game": game_name,
+                "rom": attrs.get("name", ""),
+                "size": size,
+                "source_dat": path.name,
+                "system": system,
+            }
+            if SHA1_RE.fullmatch(sha):
+                record["sha1"] = sha
+                by_sha1.setdefault((sha, size), []).append(record)
+            if CRC_RE.fullmatch(crc):
+                record["crc32"] = crc
+                by_crc.setdefault((crc, size), []).append(record)
         indices[system] = {"sha1": by_sha1, "crc32": by_crc}
     return indices
 
