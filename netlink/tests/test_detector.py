@@ -55,6 +55,20 @@ class NetLinkDetectorTests(unittest.TestCase):
             self.assertEqual(rows[0]["status"], "recognized")
             self.assertEqual(rows[0]["rom_entry"], "Tetris.gb")
 
+    def test_gba_game_code_is_candidate_not_verified(self):
+        rom = bytearray(0xC0)
+        rom[0xA0:0xAC] = b"MARIO KART  "
+        rom[0xAC:0xB0] = b"AMKE"
+        database = {"schema_version": 1, "games": [{
+            "id": "gba-mario-kart", "systems": ["gba"], "aliases": [],
+            "game_codes": ["AMKE"], "roms": [],
+            "capabilities": {"cable": True}
+        }]}
+        result = detector.classify(bytes(rom), "unidentified.gba", "gba", database)
+        self.assertEqual(result["status"], "candidate")
+        self.assertEqual(result["confidence"], "game_code")
+        self.assertEqual(result["suggestions"][0]["evidence"], "game_code")
+
     def test_real_database_fingerprint_present(self):
         dbpath = DETECTOR.parent / "database" / "games.json"
         db = json.loads(dbpath.read_text(encoding="utf-8"))
