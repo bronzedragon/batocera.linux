@@ -35,7 +35,15 @@
         "Pokemon Red",
         "Pokémon Red"
       ],
-      "roms": [],
+      "roms": [
+        {
+          "sha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+          "crc32": "9f7fdd53",
+          "size": 1048576,
+          "variant": "USA, Europe (SGB Enhanced)",
+          "source": "https://gbhwdb.gekkio.fi/cartridges/DMG-APAE-0/beckybecky125-1.html"
+        }
+      ],
       "capabilities": {
         "cable": true,
         "infrared": false,
