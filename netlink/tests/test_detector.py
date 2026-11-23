@@ -8,8 +8,10 @@ import unittest
 import zipfile
 import zlib
 import hashlib
+import sys
 
 DETECTOR = Path(__file__).resolve().parents[1] / "detect.py"
+sys.path.insert(0, str(DETECTOR.parent))
 spec = importlib.util.spec_from_file_location("netlink_detector", DETECTOR)
 detector = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(detector)
@@ -68,6 +70,27 @@ class NetLinkDetectorTests(unittest.TestCase):
         self.assertEqual(result["status"], "candidate")
         self.assertEqual(result["confidence"], "game_code")
         self.assertEqual(result["suggestions"][0]["evidence"], "game_code")
+
+    def test_guide_tetris_not_sequels(self):
+        guide = {"games": [
+            {"title": "Tetris", "system": "gb", "source_line": 1,
+             "modes": [{"links": {"cable": True}, "no_link": False}]},
+            {"title": "Tetris 2 / Tetris Flash", "system": "gb", "source_line": 2,
+             "modes": [{"links": {"cable": True}, "no_link": False}]}]}
+        base = self.rom + b"x"
+        first = detector.classify(base, "Tetris (World).gb", "gb", self.db, guide)
+        second = detector.classify(base, "Tetris 2 (World).gb", "gb", self.db, guide)
+        self.assertEqual(first["reference_matches"][0]["title"], "Tetris")
+        self.assertEqual(second["reference_matches"][0]["title"], "Tetris 2 / Tetris Flash")
+        self.assertEqual(len(second["reference_matches"]), 1)
+        self.assertFalse(second["suggestions"])
+
+    def test_guide_sgb_only_not_link_candidate(self):
+        guide = {"games": [{"title": "SGB Only", "system": "gb",
+            "modes": [{"links": {"snes_controller": True}, "no_link": False}]}]}
+        result = detector.classify(b"x" * 512, "SGB Only.gb", "gb", {"games": []}, guide)
+        self.assertEqual(result["status"], "unknown")
+        self.assertEqual(result["reference_matches"][0]["hardware_link_capable"], False)
 
     def test_real_database_fingerprint_present(self):
         dbpath = DETECTOR.parent / "database" / "games.json"
