@@ -84,3 +84,24 @@ python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /t
 ```
 
 Older installations still work with no DAT files. The importer is read-only and never renames or copies ROMs.
+
+## Libretro database source for GB, GBC, and GBA (ClrMamePro DAT format)
+
+The three system DATs are available at https://github.com/libretro/libretro-database/tree/master/metadat/no-intro . These are **ClrMamePro text DATs**, not XML: the `nointro.py` reader now accepts both formats.
+
+Observed Libretro catalog version **2026.11.14**, containing 2,144 GB entries, 2,446 GBC entries, and 3,509 GBA entries. These counts describe the checked repository revision, not a promise that a later `master` snapshot will match.
+
+Run the opt-in downloader on Ubuntu, not from the game launch path:
+
+```sh
+python3 netlink/tools/update_libretro_dats.py
+```
+
+The script saves `gb.dat`, `gbc.dat`, and `gba.dat` beneath `netlink/database/no-intro/`, displaying each SHA-256. For reproducibility, specify `--revision <commit SHA>` instead of following `master`. Deploy these three DAT files alongside the NetLink code on Batocera. They are not committed into this project's repository and **no ROM files are downloaded**.
+
+```sh
+python3 -m unittest discover -s netlink/tests -v
+python3 /userdata/system/netlink/index.py --rom-root /userdata/roms --jsonl > /tmp/netlink-index-results.jsonl
+```
+
+The DAT reader identifies ROM contents by hash. NetLink eligibility and core transport compatibility remain independent.
