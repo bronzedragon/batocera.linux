@@ -55,14 +55,14 @@ def _rom_records_xml(path):
 
 
 # Quoted strings are a single token, regardless of parentheses in game titles.
-_CM_TOKEN = re.compile(r'"(?:\\\\.|[^"\\\\])*"|[()]|[^\\s()"]+')
+_CM_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[()]|[^\s()"]+')
 
 def _rom_records_cmpro(path):
     """Yield (game name, ROM attributes) from Libretro's ClrMamePro DAT."""
     source = path.read_text(encoding="utf-8-sig")
     def unquote(token):
         if token.startswith('"') and token.endswith('"'):
-            return token[1:-1].replace('\\\\"', '"').replace('\\\\\\\\', '\\\\')
+            return token[1:-1].replace('\\"', '"').replace('\\\\', '\\')
         return token
 
     tokens = iter(_CM_TOKEN.findall(source))
@@ -104,7 +104,7 @@ def build_lookup(folder):
         if path.stat().st_size > MAX_DAT_BYTES:
             raise ValueError("No-Intro DAT too large: " + str(path))
         with path.open("rb") as stream:
-            prefix = stream.read(128).lstrip(b"\\xef\\xbb\\xbf \\r\\n\\t")
+            prefix = stream.read(128).lstrip(b"\xef\xbb\xbf \r\n\t")
         records = (_rom_records_xml(path) if prefix.startswith(b"<")
                    else _rom_records_cmpro(path))
         by_sha1, by_crc = {}, {}
