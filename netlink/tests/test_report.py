@@ -60,6 +60,37 @@ class ReportTests(unittest.TestCase):
         self.assertFalse(result["host_enabled"])
         self.assertEqual(result["compatibility_records"], ["boot_tested_only"])
 
+
+    def test_manual_verified_requires_exact_tested_sha1(self):
+        verified = {"games": [{
+            "id": "gb-tetris", "systems": ["gb"],
+            "capabilities": {"cable": True},
+            "compatibility": "network_verified",
+            "netlink_core": "gambatte_link",
+            "network_tests": [{
+                "result": "passed", "transport": "cable",
+                "rom_sha1": "74591cc9501af93873f9a5d3eb12da12c0723bbc",
+                "protocol": "gambatte-hb-link-6"
+            }]
+        }]}
+        row = {
+            "system": "gb", "status": "candidate",
+            "suggestions": [{"game_id": "gb-tetris"}],
+            "no_intro_matches": [{"identification": "exact_sha1",
+                "sha1": "74591cc9501af93873f9a5d3eb12da12c0723bbc",
+                "game": "Tetris (World) (Rev A)"}]
+        }
+        result = report.describe_row(row, verified, GUIDE)
+        self.assertEqual(result["netlink_readiness"], "manual_verified")
+        self.assertEqual(result["verified_transports"], ["cable"])
+        self.assertFalse(result["host_enabled"])
+        self.assertFalse(result["join_enabled"])
+        row["no_intro_matches"][0]["sha1"] = "0" * 40
+        other = report.describe_row(row, verified, GUIDE)
+        self.assertEqual(other["netlink_readiness"], "not_implemented")
+        self.assertEqual(other["verified_transports"], [])
+        self.assertFalse(other["host_enabled"])
+
     def test_gba_game_code_candidate(self):
         row = {"system": "gba", "rom_entry": "unknown.gba",
                "status": "candidate", "suggestions": [{"game_id": "gba-ruby"}]}
