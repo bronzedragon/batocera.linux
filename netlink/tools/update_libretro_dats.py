@@ -31,7 +31,7 @@ def update(output_dir, revision="master"):
             contents = response.read(MAX_BYTES + 1)
         if len(contents) > MAX_BYTES:
             raise ValueError("DAT exceeds 100 MiB: " + filename)
-        if not contents.lstrip(b"\\xef\\xbb\\xbf \\r\\n\\t").startswith(
+        if not contents.lstrip(b"\xef\xbb\xbf \r\n\t").startswith(
                 (b"clrmamepro", b"<")):
             raise ValueError("Unrecognized DAT format: " + filename)
         target = output_dir / (system + ".dat")
