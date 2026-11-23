@@ -19,7 +19,7 @@ diff --git a/es-app/src/FileData.h b/es-app/src/FileData.h
 diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
 --- a/es-app/src/FileData.cpp
 +++ b/es-app/src/FileData.cpp
-@@ -491,11 +491,28 @@
+@@ -491,11 +491,29 @@
  	if (gameToUpdate == nullptr)
  		return "";
  
