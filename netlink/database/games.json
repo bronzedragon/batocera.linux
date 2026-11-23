@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Initial NetLink hardware capability registry. Exact ROM fingerprints are required for automatic recognized status; titles are only hints. NetLink emulator compatibility is tracked separately.",
+  "description": "Community-source hardware-capability candidates; exact ROM fingerprints are required for recognized status. Core network compatibility must be verified separately. Sources are pointers, not a guarantee that every regional ROM or multiplayer mode works.",
   "games": [
     {
       "id": "gb-tetris",
@@ -24,7 +24,10 @@
         "max_players": 2
       },
       "netlink_core": "gambatte_link",
-      "compatibility": "boot_tested_only"
+      "compatibility": "boot_tested_only",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ]
     },
     {
       "id": "gb-pokemon-red",
@@ -52,7 +55,10 @@
         "max_players": 2
       },
       "netlink_core": "gambatte_link",
-      "compatibility": "untested"
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ]
     },
     {
       "id": "gbc-pokemon-crystal",
@@ -72,7 +78,11 @@
         "max_players": 2
       },
       "netlink_core": "gambatte_link",
-      "compatibility": "untested"
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality",
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Color_games_with_IR_support"
+      ]
     },
     {
       "id": "gba-zelda-four-swords",
@@ -81,7 +91,8 @@
       ],
       "aliases": [
         "A Link to the Past & Four Swords",
-        "Four Swords"
+        "Four Swords",
+        "GBAZELDA"
       ],
       "roms": [],
       "capabilities": {
@@ -92,7 +103,267 @@
         "max_players": 4
       },
       "netlink_core": "mgba_dual",
-      "compatibility": "untested"
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ],
+      "game_codes": [
+        "AZLE"
+      ]
+    },
+    {
+      "id": "gb-pokemon-blue",
+      "systems": [
+        "gb"
+      ],
+      "aliases": [
+        "Pokemon Blue",
+        "Pokémon Blue"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gb-pokemon-yellow",
+      "systems": [
+        "gb"
+      ],
+      "aliases": [
+        "Pokemon Yellow",
+        "Pokémon Yellow"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gbc-pokemon-gold",
+      "systems": [
+        "gbc"
+      ],
+      "aliases": [
+        "Pokemon Gold",
+        "Pokémon Gold",
+        "PokemonGld"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": true,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gbc-pokemon-silver",
+      "systems": [
+        "gbc"
+      ],
+      "aliases": [
+        "Pokemon Silver",
+        "Pokémon Silver",
+        "PokemonSlv"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": true,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "gambatte_link",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gba-mario-kart-super-circuit",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "Mario Kart Super Circuit",
+        "Mario Kart"
+      ],
+      "game_codes": [
+        "AMKE"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 4
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gba-pokemon-ruby",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "Pokemon Ruby",
+        "Pokémon Ruby"
+      ],
+      "game_codes": [
+        "AXVE"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gba-pokemon-sapphire",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "Pokemon Sapphire",
+        "Pokémon Sapphire",
+        "Pokemon Sapp"
+      ],
+      "game_codes": [
+        "AXPE"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gba-pokemon-emerald",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "Pokemon Emerald",
+        "Pokémon Emerald",
+        "Pokemon Emer"
+      ],
+      "game_codes": [
+        "BPEE"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gba-pokemon-firered",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "Pokemon FireRed",
+        "Pokémon FireRed",
+        "Pokemon Fire"
+      ],
+      "game_codes": [
+        "BPRE"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ]
+    },
+    {
+      "id": "gba-pokemon-leafgreen",
+      "systems": [
+        "gba"
+      ],
+      "aliases": [
+        "Pokemon LeafGreen",
+        "Pokémon LeafGreen",
+        "Pokemon Leaf"
+      ],
+      "game_codes": [
+        "BPGE"
+      ],
+      "roms": [],
+      "capabilities": {
+        "cable": true,
+        "infrared": false,
+        "wireless_adapter": false,
+        "min_players": 2,
+        "max_players": 2
+      },
+      "netlink_core": "mgba_dual",
+      "compatibility": "untested",
+      "hardware_sources": [
+        "https://nintendo.fandom.com/wiki/List_of_Game_Boy_Advance_games_with_Link_Cable_functionality"
+      ]
     }
   ]
 }
