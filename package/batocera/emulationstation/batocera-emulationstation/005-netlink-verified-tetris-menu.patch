@@ -27,7 +27,7 @@ diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
 -	if (system == nullptr)
 -		return "";
 -
--	// must really;-)
+-	// must really;-) be done before window->deinit while it closes joysticks
 +	SystemData* system = gameToUpdate->getSystem();
 +	if (system == nullptr)
 +		return "";
@@ -49,7 +49,7 @@ diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
 +		return command + " --launch";
 +	}
 +
-+	// must really;-)
++	// must really;-) be done before window->deinit while it closes joysticks
  	std::string controllersConfig = InputManager::getInstance()->configureEmulators();
  
  	if (gameToUpdate->isLightGunGame())
