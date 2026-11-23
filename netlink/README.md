@@ -230,3 +230,39 @@ fingerprint-gated launcher and a proper ES game launch lifecycle/return path,
 rather than hijacking generic Netplay or changing global core selection.
 Until that integration is implemented and tested, report
 `host_enabled=false`, `join_enabled=false`.
+
+## Native EmulationStation menu patch (Phase 14, build pending)
+
+An experimental patch is committed at
+`package/batocera/emulationstation/batocera-emulationstation/005-netlink-verified-tetris-menu.patch`.
+It is authored against the Batocera package's pinned EmulationStation revision
+`3c8f8fc7465633257210565935580617418362b7`. The patch modifies
+`FileData.h`, `FileData.cpp`, and `GuiGameOptions.cpp`:
+
+- Adds separate `netLinkRole` and `netLinkPeer` launch options, which are
+  independent of Batocera's generic Netplay mode.
+- Adds **HOST NETLINK GAME** and **JOIN NETLINK GAME** to game options only for
+  `gb/Tetris (World) (Rev A).zip` as a *provisional UI filter*. This filename
+  is not trusted as identity: the launch backend still enforces the exact
+  ROM SHA-1 and custom core SHA-256 against the verified database record.
+- JOIN prompts for the host IP using EmulationStation's text edit popup.
+  The Python backend rejects malformed or invalid peer addresses.
+- Uses `ViewController::launch` and the existing `FileData::launchGame`
+  lifecycle so the frontend deinitializes before the emulator starts and
+  reinitializes upon exit. Generic single-player launch is untouched.
+- Calls `python3 /userdata/system/netlink/launch.py ... --launch`.
+  The interpreter and script must be deployed before enabling the patch.
+
+**Status:** Patch context was checked against the exact pinned source files;
+the EmulationStation C++ binary has **not yet been compiled, installed, or
+tested**. This source patch will only appear in a future custom Batocera
+build, not merely by updating `/userdata/system/netlink` on stock Batocera.
+Maintain a stock bootable system/image until that build passes a full
+compile and hardware return-to-menu test. The current report's
+`host_enabled` and `join_enabled` remain disabled.
+
+For integration validation: (1) compile ES with the patch, (2) verify normal
+single-player launches and return to ES, (3) verify the two NetLink entries
+appear for only the provisional Tetris selection, (4) test malformed IP
+rejection and hash mismatch refusal, (5) Host/Join a linked Tetris round,
+(6) exit RetroArch on both hosts and confirm ES reinitializes normally.
