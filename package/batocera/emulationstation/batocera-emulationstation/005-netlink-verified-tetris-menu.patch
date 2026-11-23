@@ -1,0 +1,97 @@
+diff --git a/es-app/src/FileData.h b/es-app/src/FileData.h
+--- a/es-app/src/FileData.h
++++ b/es-app/src/FileData.h
+@@ -63,8 +63,12 @@
+ 	int port;
+ 	std::string session;
+ 
+-	std::string core;
+-	std::string netplayClientPassword;
++	std::string core;
++	std::string netplayClientPassword;
++
++	// NetLink is independent of generic RetroArch Netplay and core selection.
++	std::string netLinkRole;
++	std::string netLinkPeer;
+ 
+ 	SaveState*	saveStateInfo;
+ 	bool isSaveStateInfoTemporary;
+diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
+--- a/es-app/src/FileData.cpp
++++ b/es-app/src/FileData.cpp
+@@ -491,11 +491,28 @@
+ 	if (gameToUpdate == nullptr)
+ 		return "";
+ 
+-	SystemData* system = gameToUpdate->getSystem();
+-	if (system == nullptr)
+-		return "";
+-
+-	// must really;-)
++	SystemData* system = gameToUpdate->getSystem();
++	if (system == nullptr)
++		return "";
++
++	// Explicit NetLink sessions retain FileData's normal deinit/reinit lifecycle.
++	// The Python launcher refuses any ROM/core/protocol combination not verified.
++	if (!options.netLinkRole.empty())
++	{
++		if (options.netLinkRole != "host" && options.netLinkRole != "join")
++			return "";
++		std::string command = "python3 /userdata/system/netlink/launch.py --role " + options.netLinkRole;
++		command += " --rom " + Utils::FileSystem::getEscapedPath(getPath());
++		if (options.netLinkRole == "join")
++		{
++			if (options.netLinkPeer.empty())
++				return "";
++			command += " --peer " + Utils::FileSystem::getEscapedPath(options.netLinkPeer);
++		}
++		return command + " --launch";
++	}
++
++	// must really;-)
+ 	std::string controllersConfig = InputManager::getInstance()->configureEmulators();
+ 
+ 	if (gameToUpdate->isLightGunGame())
+diff --git a/es-app/src/guis/GuiGameOptions.cpp b/es-app/src/guis/GuiGameOptions.cpp
+--- a/es-app/src/guis/GuiGameOptions.cpp
++++ b/es-app/src/guis/GuiGameOptions.cpp
+@@ -143,9 +143,35 @@
+ 
+ 	if (game->getType() == GAME)
+ 	{
+-		mMenu.addGroup(_("GAME"));
+-
+-		if (SaveStateRepository::isEnabled(game))
++		mMenu.addGroup(_("GAME"));
++
++		// Phase 13: a provisional menu for our exact, tested Tetris title.
++		// launch.py independently checks the actual ROM and core fingerprints.
++		if (game->getSourceFileData()->getSystem()->getName() == "gb" &&
++			Utils::FileSystem::getFileName(game->getPath()) == "Tetris (World) (Rev A).zip")
++		{
++			mMenu.addEntry(_("HOST NETLINK GAME"), false, [this, game]
++			{
++				LaunchGameOptions options;
++				options.netLinkRole = "host";
++				ViewController::get()->launch(game, options);
++				close();
++			});
++			mMenu.addEntry(_("JOIN NETLINK GAME"), false, [this, game]
++			{
++				mWindow->pushGui(new GuiTextEditPopup(mWindow, _("NETLINK HOST IP"),
++					"", [this, game](const std::string& peer)
++					{
++						LaunchGameOptions options;
++						options.netLinkRole = "join";
++						options.netLinkPeer = peer;
++						ViewController::get()->launch(game, options);
++						close();
++					}, false));
++			});
++		}
++
++		if (SaveStateRepository::isEnabled(game))
+ 		{
+ 			mMenu.addEntry(_("SAVESTATES"), false, [window, game, this]
+ 			{
