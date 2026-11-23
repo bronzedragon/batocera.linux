@@ -43,6 +43,24 @@ printf 'Core: %s\n' "$CORE"
 sha256sum "$CORE"
 printf 'ROM: %s\n' "$ROM"
 sha1sum "$ROM"
+# RetroArch can load zipped GB content; compare the actual inner ROM hashes.
+if [[ "${ROM,,}" == *.zip ]]; then
+  python3 - "$ROM" <<'PY'
+import hashlib
+import pathlib
+import sys
+import zipfile
+path = pathlib.Path(sys.argv[1])
+with zipfile.ZipFile(path) as archive:
+    members = [info for info in archive.infolist()
+               if not info.is_dir() and pathlib.Path(info.filename).suffix.lower() in (".gb", ".gbc")]
+    if len(members) != 1:
+        raise SystemExit(f"Expected exactly one GB/GBC ROM in ZIP, found {len(members)}")
+    content = archive.read(members[0])
+    print("Inner ROM:", members[0].filename)
+    print("Inner ROM SHA-1:", hashlib.sha1(content).hexdigest())
+PY
+fi
 cmd=(retroarch --verbose --libretro "$CORE" --port "$PORT")
 [[ -z "$CONFIG" ]] || cmd+=(--config "$CONFIG")
 if [[ "$ROLE" == host ]]; then cmd+=(--host); else cmd+=(--connect "$PEER"); fi
