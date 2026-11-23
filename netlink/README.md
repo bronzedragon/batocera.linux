@@ -266,3 +266,53 @@ single-player launches and return to ES, (3) verify the two NetLink entries
 appear for only the provisional Tetris selection, (4) test malformed IP
 rejection and hash mismatch refusal, (5) Host/Join a linked Tetris round,
 (6) exit RetroArch on both hosts and confirm ES reinitializes normally.
+
+## Phase 14 build validation on an Ubuntu x86_64 development host
+
+The NetLink menu patch was checked against the pinned upstream files and its
+unified-diff hunk sizes, but this development session does not have the full
+Batocera Buildroot source/toolchain or a prepared output tree. A compiled ES
+executable has **not** been produced. Never replace the stock ES binary on
+either production machine just because source applicability passes.
+
+With the `feature/handheld-network-link` checkout in `~/src/batocera-netlink`:
+
+```sh
+cd ~/src/batocera-netlink
+git pull --ff-only
+
+# Fetch the exact pinned ES sources into a *separate* checkout.
+git clone https://github.com/batocera-linux/batocera-emulationstation.git /tmp/netlink-es-check
+git -C /tmp/netlink-es-check checkout --detach 3c8f8fc7465633257210565935580617418362b7
+
+# Read-only patch applicability verification; does not alter ES files:
+python3 netlink/tools/check_es_patch.py --es-source /tmp/netlink-es-check
+
+# Optional temporary patched source for inspection (not deployed):
+git -C /tmp/netlink-es-check apply --check \
+ package/batocera/emulationstation/batocera-emulationstation/005-netlink-verified-tetris-menu.patch
+```
+
+The last optional example assumes the patch is supplied as an absolute path
+when running `git -C` from a different directory. A safe equivalent is:
+
+```sh
+PATCH="$PWD/package/batocera/emulationstation/batocera-emulationstation/005-netlink-verified-tetris-menu.patch"
+git -C /tmp/netlink-es-check apply --check "$PATCH"
+```
+
+For an **existing configured** x86_64 Buildroot development tree, Batocera's
+top-level Makefile supports targeted package builds:
+
+```sh
+make x86_64-pkg PKG=batocera-emulationstation-dirclean
+make x86_64-pkg PKG=batocera-emulationstation
+```
+
+`dirclean` ensures the package is re-extracted and the new `005` patch is
+actually applied (instead of reusing a stale, already-patched build stamp).
+These commands depend on a configured toolchain/output tree and may need to
+download/build prerequisite packages. Keep this build separate from the
+working Batocera devices. Inspect build logs and verify `HOST NETLINK GAME`
+and `JOIN NETLINK GAME` strings in the newly built binary before *any*
+controlled installation trial.
